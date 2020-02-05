@@ -78,6 +78,10 @@ public class Player extends SpaceObject {
             bullets.add(new Bullet(x, y, radians));
         }
         
+        public void hit(){
+            System.out.println("Ship hit!!!");
+        }
+        
 	public void update(float dt) {
 		
 		// turning
@@ -155,6 +159,8 @@ public class Player extends SpaceObject {
 		sr.end();
 		
 	}
+
+
 	
 }
 
