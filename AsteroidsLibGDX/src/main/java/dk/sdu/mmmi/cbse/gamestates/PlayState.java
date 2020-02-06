@@ -15,7 +15,7 @@ public class PlayState extends GameState {
 
     private ShapeRenderer sr;
 
-    private Player player;
+    private Player player, player2;
     private ArrayList<Bullet> bullets;
     private ArrayList<Asteroid> asteroids;
     private ArrayList<Enemy> enemy;
@@ -35,7 +35,7 @@ public class PlayState extends GameState {
         player = new Player(bullets);
 
         enemy = new ArrayList<Enemy>();
-        
+
         asteroids = new ArrayList<Asteroid>();
 
         level = 1;
@@ -43,12 +43,12 @@ public class PlayState extends GameState {
         spawnEnemies();
 
     }
-    
+
     private void spawnEnemies() {
         enemy.clear();
-        
+
         int numToSpawn = 4;
-        for(int i = 0; i < numToSpawn; i++){
+        for (int i = 0; i < numToSpawn; i++) {
             float x = MathUtils.random(Game.WIDTH);
             float y = MathUtils.random(Game.HEIGHT);
 
@@ -66,7 +66,7 @@ public class PlayState extends GameState {
             System.out.println("HEJ");
             enemy.add(new Enemy(x, y));
         }
-        
+
     }
 
     private void spawnAsteroids() {
@@ -120,10 +120,15 @@ public class PlayState extends GameState {
                 i--;
             }
         }
-        
+
         //update enemy
-        for(int i = 0; i < enemy.size(); i++){
+        for (int i = 0; i < enemy.size(); i++) {
             enemy.get(i).update(dt);
+
+            if (enemy.get(i).shouldRemove()) {
+                enemy.remove(i);
+                i--;
+            }
         }
 
         //check Collision
@@ -131,9 +136,42 @@ public class PlayState extends GameState {
     }
 
     private void checkCollisions() {
-        for(int i = 0; i < asteroids.size(); i++) {
+        //enemy bullet collision
+        
+        for(int i = 0; i < enemy.size(); i++){
+            Enemy e = enemy.get(i);
+            for(int k = 0; k < e.getEnemyBullets().size(); k++){
+                Bullet b = e.getEnemyBullets().get(k);
+                if(player.contains(b.getx(), b.gety())){
+                    e.getEnemyBullets().remove(k);
+                    k--;
+                    player.hit();
+                    break;
+                }
+            }
+        }
+        
+        //bullet enemy collision
+
+        for (int i = 0; i < bullets.size(); i++) {
+            Bullet b = bullets.get(i);
+            for (int k = 0; k < enemy.size(); k++) {
+                Enemy e = enemy.get(k);
+                if (e.contains(b.getx(), b.gety())) {
+                    bullets.remove(i);
+                    i--;
+                    enemy.remove(k);
+                    break;
+
+                }
+
+            }
+        }
+
+        //player asteroid collision
+        for (int i = 0; i < asteroids.size(); i++) {
             Asteroid a = asteroids.get(i);
-            if(a.intersects(player)){
+            if (a.intersects(player)) {
                 player.hit();
                 asteroids.remove(i);
                 i--;
@@ -141,7 +179,7 @@ public class PlayState extends GameState {
                 break;
             }
         }
-        
+
         // bullet astyeroid collision
         for (int i = 0; i < bullets.size(); i++) {
             Bullet b = bullets.get(i);
@@ -164,7 +202,7 @@ public class PlayState extends GameState {
         if (a.getType() == Asteroid.LARGE) {
             asteroids.add(new Asteroid(a.getx(), a.gety(), Asteroid.MEDIUM));
             asteroids.add(new Asteroid(a.getx(), a.gety(), Asteroid.MEDIUM));
-        } else if(a.getType() == Asteroid.MEDIUM){
+        } else if (a.getType() == Asteroid.MEDIUM) {
             asteroids.add(new Asteroid(a.getx(), a.gety(), Asteroid.SMALL));
             asteroids.add(new Asteroid(a.getx(), a.gety(), Asteroid.SMALL));
         }
@@ -182,9 +220,9 @@ public class PlayState extends GameState {
         for (int i = 0; i < asteroids.size(); i++) {
             asteroids.get(i).draw(sr);
         }
-        
+
         //draw enemies
-        for(int i = 0; i < enemy.size(); i++){
+        for (int i = 0; i < enemy.size(); i++) {
             enemy.get(i).draw(sr);
         }
     }

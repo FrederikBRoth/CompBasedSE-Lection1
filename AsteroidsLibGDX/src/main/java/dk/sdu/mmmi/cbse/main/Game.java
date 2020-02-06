@@ -52,7 +52,8 @@ public class Game implements ApplicationListener {
         @Override
 	public void resize(int width, int height) {}
         @Override
-	public void pause() {}
+	public void pause() {
+        }
         @Override
 	public void resume() {}
         @Override

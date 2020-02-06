@@ -7,6 +7,7 @@ package dk.sdu.mmmi.cbse.entities;
 
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
+import java.util.ArrayList;
 
 /**
  *
@@ -14,20 +15,32 @@ import com.badlogic.gdx.math.MathUtils;
  */
 public class Enemy extends SpaceObject {
 
+    private static final int MAX_BULLETS = 4;
+    //If true clockwise, false counter-clockwise
+    private boolean turnDirection = true;
+    private float timer;
+    private float accelerationTimer;
+    private int acceleration;
+    private int deceleration;
+    private int maxSpeed;
+    private boolean remove;
+    private ArrayList<Bullet> enemyBullets;
+
     public Enemy(float x, float y) {
         this.x = x;
         this.y = y;
 
-        rotationSpeed = MathUtils.random(-1, 1);
-
         radians = MathUtils.random(2 * (float) Math.PI);
 
-        speed = 20;
-        dx = MathUtils.cos(radians) * speed;
-        dy = MathUtils.sin(radians) * speed;
+        rotationSpeed = 3;
+        acceleration = 25;
+        deceleration = 20;
+        maxSpeed = 50;
 
+        enemyBullets = new ArrayList<Bullet>();
         shapex = new float[4];
         shapey = new float[4];
+        timer = 0;
 
     }
 
@@ -45,57 +58,74 @@ public class Enemy extends SpaceObject {
         shapey[3] = y + MathUtils.sin(radians + 4 * 3.1415f / 5) * 8;
     }
 
+    public void shoot() {
+        if (enemyBullets.size() == MAX_BULLETS) {
+            return;
+        }
+        enemyBullets.add(new Bullet(x, y, radians));
+    }
+
     public void update(float dt) {
+        timer += dt;
+        dx += MathUtils.cos(radians) * acceleration * dt;
+        dy += MathUtils.sin(radians) * acceleration * dt;
+        accelerationTimer += dt;
+        if (accelerationTimer > 0.1f) {
+            accelerationTimer = 0;
+        }
+
+        float vec = (float) Math.sqrt(dx * dx + dy * dy);
+        if (vec > 0) {
+            dx -= (dx / vec) * deceleration * dt;
+            dy -= (dy / vec) * deceleration * dt;
+        }
+        if (vec > maxSpeed) {
+            dx = (dx / vec) * maxSpeed;
+            dy = (dy / vec) * maxSpeed;
+        }
+
+//        if (timer > 3) {
+//            if (turnDirection) {
+//                radians -= rotationSpeed * dt;
+//            } else {
+//                radians += rotationSpeed * dt;
+//            }
+//        }
+        if (timer > 3.5f) {
+            timer = 0;
+//            turnDirection = Math.random() < 0.5 ? true : false;
+            shoot();
+        }
+        for (int i = 0; i < enemyBullets.size(); i++) {
+            enemyBullets.get(i).update(dt);
+            if (enemyBullets.get(i).shouldRemove()) {
+                enemyBullets.remove(i);
+                i--;
+            }
+        }
 
         x += dx * dt;
         y += dy * dt;
-        radians += rotationSpeed * dt;
         setShape();
         wrap();
-        // turning
-//        if (left) {
-//            radians += rotationSpeed * dt;
-//        } else if (right) {
-//            radians -= rotationSpeed * dt;
-//        }
-//
-//        // accelerating
-//        if (up) {
-//            dx += MathUtils.cos(radians) * acceleration * dt;
-//            dy += MathUtils.sin(radians) * acceleration * dt;
-//            acceleratingTimer += dt;
-//            if (acceleratingTimer > 0.1f) {
-//                acceleratingTimer = 0;
-//            }
-//        } else {
-//            acceleratingTimer = 0;
-//        }
-//
-//        // deceleration
-//        float vec = (float) Math.sqrt(dx * dx + dy * dy);
-//        if (vec > 0) {
-//            dx -= (dx / vec) * deceleration * dt;
-//            dy -= (dy / vec) * deceleration * dt;
-//        }
-//        if (vec > maxSpeed) {
-//            dx = (dx / vec) * maxSpeed;
-//            dy = (dy / vec) * maxSpeed;
-//        }
-//
-//        // set position
-//        x += dx * dt;
-//        y += dy * dt;
-//
-//        // set shape
-//        setShape();
-//
-//        //set flame
-//        // screen wrap
-//        wrap();
     }
 
+    public void setRemove(boolean remove) {
+        this.remove = remove;
+    }
+
+    public boolean shouldRemove() {
+        return remove;
+    }
+    
+    
+    public ArrayList<Bullet> getEnemyBullets() {
+        return enemyBullets;
+    }
+
+
     public void draw(ShapeRenderer sr) {
-        sr.setColor(255, 1, 1, 1);
+        sr.setColor(0.5f, 0.5f, 0, 1);
 
         sr.begin(ShapeRenderer.ShapeType.Line);
 
@@ -107,6 +137,10 @@ public class Enemy extends SpaceObject {
             sr.line(shapex[i], shapey[i], shapex[j], shapey[j]);
 
         }
+
         sr.end();
+        for (int i = 0; i < enemyBullets.size(); i++) {
+            enemyBullets.get(i).draw(sr);
+        }
     }
 }
